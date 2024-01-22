@@ -15,18 +15,21 @@ function construct_query_url(lat, long, current, quarterly, hourly) {
 }
 
 async function fetch_data(url) {
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-  };
-  const response = await fetch(url, { headers });
+  const response = await fetch(url);
   const data = await response.json();
   return CurrentWeather.parse(data);
 }
 
 async function dummy_request(url) {
   console.log(`Ignoring ${url}, returning dummy result...`);
-  const data = await fetch_data('./demo_response.json');
-  return data;
+  function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+  }
+  return new CurrentWeather(
+    new Date().toISOString(),
+    getRandomInt(40),
+    getRandomInt(15)
+  );
 }
 
 class CurrentWeather {
@@ -45,7 +48,6 @@ class CurrentWeather {
   }
 
   render() {
-    // When are we?
     const date = document.createElement("h1");
     const parsed_date = new Date(Date.parse(this.date));
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -54,7 +56,6 @@ class CurrentWeather {
     date.style.fontSize = "100px";
     date.style.padding = "50px";
 
-    // How hot is it?
     const temp = document.createElement("p");
     temp.innerText = `Temp:\n${this.temp_c} ${String.fromCharCode(176)}C`;
     temp.style.textAlign = "center";
@@ -120,5 +121,5 @@ async function populate_weather_widget(dummy_mode, refresh_rate_ms) {
 
 // Start point
 const dummy_mode = true;
-const refresh_interval_sec = 30;
+const refresh_interval_sec = 3;
 populate_weather_widget(dummy_mode, refresh_interval_sec * 1000);
