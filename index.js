@@ -46,23 +46,43 @@ class CurrentWeather {
 
   render() {
     // When are we?
-    const date = document.createElement("p");
+    const date = document.createElement("h1");
     const parsed_date = new Date(Date.parse(this.date));
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     date.innerText = `${parsed_date.toLocaleDateString("en-US", options)}`;
+    date.style.textAlign = "center";
+    date.style.fontSize = "100px";
+    date.style.padding = "50px";
 
     // How hot is it?
     const temp = document.createElement("p");
-    temp.innerText = `Temperature: ${this.temp_c} ${String.fromCharCode(176)}C`;
-    // temp.style.color = "green";
+    temp.innerText = `Temp:\n${this.temp_c} ${String.fromCharCode(176)}C`;
+    temp.style.textAlign = "center";
+    temp.style.float = "left";
+    temp.style.width = "50%";
+    temp.style.fontSize = "100px";
 
     const wind = document.createElement("p");
-    wind.innerText = `Wind Speed: ${this.wind_speed_km_h} km/h`;
+    wind.innerText = `Wind Speed:\n${this.wind_speed_km_h} km/h`;
+    wind.style.textAlign = "center";
+    wind.style.float = "right";
+    wind.style.width = "50%";
+    wind.style.fontSize = "100px";
+
+    const info_container = document.createElement("div");
+    info_container.style.display = "flex";
+    info_container.appendChild(temp);
+    info_container.appendChild(wind);
+
+    const timestamp = document.createElement("p");
+    timestamp.style.textAlign = "center";
+    timestamp.style.fontSize = "50px";
+    timestamp.innerText = `Last updated: ${this.date.split("T")[1]}`;
 
     const root = document.createElement("div");
     root.appendChild(date);
-    root.appendChild(temp);
-    root.appendChild(wind);
+    root.appendChild(info_container);
+    root.appendChild(timestamp);
 
     return root;
   }
