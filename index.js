@@ -15,26 +15,60 @@ function construct_query_url(lat, long, current, quarterly, hourly) {
 }
 
 async function fetch_data(url) {
-  const response = await fetch(url);
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+  };
+  const response = await fetch(url, { headers });
   const data = await response.json();
-  const p = document.createElement("pre");
-  p.innerHTML = JSON.stringify(data, null, 4);
-  document.body.appendChild(p);
+  return CurrentWeather.parse(data);
 }
 
-function dummy_request(url) {
+async function dummy_request(url) {
   console.log(`Ignoring ${url}, returning dummy result...`);
-  fetch_data('./demo_response.json');
+  const data = await fetch_data('./demo_response.json');
+  return data;
 }
 
-function parse_result(data) {
-  // TODO: Implement
+class CurrentWeather {
+  constructor(date, temp_c, wind_speed_km_h) {
+    this.date = date;
+    this.temp_c = temp_c;
+    this.wind_speed_km_h = wind_speed_km_h;
+  }
+
+  static parse(data) {
+    return new CurrentWeather(
+      data["current"]["time"],
+      data["current"]["temperature_2m"],
+      data["current"]["wind_speed_10m"]
+    )
+  }
+
+  render() {
+    // When are we?
+    const date = document.createElement("p");
+    const parsed_date = new Date(Date.parse(this.date));
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    date.innerText = `${parsed_date.toLocaleDateString("en-US", options)}`;
+
+    // How hot is it?
+    const temp = document.createElement("p");
+    temp.innerText = `Temperature: ${this.temp_c} ${String.fromCharCode(176)}C`;
+    // temp.style.color = "green";
+
+    const wind = document.createElement("p");
+    wind.innerText = `Wind Speed: ${this.wind_speed_km_h} km/h`;
+
+    const root = document.createElement("div");
+    root.appendChild(date);
+    root.appendChild(temp);
+    root.appendChild(wind);
+
+    return root;
+  }
 }
 
-function main() {
-
-  const dummy_mode = true;
-
+async function populate_weather_widget(dummy_mode, refresh_rate_ms) {
   // Coordinates of Bushwick According to Google: 40.6958° N, 73.9171° W
   // Rounded to two decimal places to resemble API example
   const latitude = "40.70";
@@ -43,19 +77,28 @@ function main() {
   // Info we want about the given location at different timescales
   const current_vars = ["temperature_2m", "wind_speed_10m"];
   const minutely_15_vars = [];
-  const hourly_vars = ["temperature_2m", "relative_humidity_2m", "wind_speed_10m"];
+  const hourly_vars = [];
 
   // TODO: Set units for temperature/wind-speed (defaults appear to be in metric)
   const url = construct_query_url(latitude, longitude, current_vars, minutely_15_vars, hourly_vars);
 
-  console.log(`Url: ${url}`);
-
+  console.log("Fetching weather data...")
+  let result;
   if (dummy_mode) {
-    dummy_request(url);
+    result = await dummy_request(url);
   } else {
-    fetch_data(url);
+    result = await fetch_data(url);
   }
 
+
+  document.getElementById("weather").innerHTML = '';
+  document.getElementById("weather").appendChild(result.render());
+
+  setTimeout(() => populate_weather_widget(dummy_mode, refresh_rate_ms), refresh_rate_ms);
 }
 
-main();
+
+// Start point
+const dummy_mode = true;
+const refresh_interval_sec = 30;
+populate_weather_widget(dummy_mode, refresh_interval_sec * 1000);
